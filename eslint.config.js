@@ -33,6 +33,17 @@ export default tseslint.config(
     },
   },
   {
+    // Node 脚本（如自动化截图）使用 Node 全局对象
+    files: ['scripts/**/*.{js,mjs,cjs}'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+  {
     files: ['**/*.{ts,vue}'],
     languageOptions: {
       ecmaVersion: 2022,
