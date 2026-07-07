@@ -1,0 +1,54 @@
+/* 明格大屏 全局样式与主题变量 */
+:root {
+  --bs-bg: #061227;
+  --bs-bg-grad: radial-gradient(circle at 50% 0%, #0a2148 0%, #061227 55%, #030b18 100%);
+  --bs-panel-bg: rgba(13, 38, 76, 0.55);
+  --bs-panel-border: rgba(56, 189, 248, 0.25);
+  --bs-primary: #22d3ee;
+  --bs-primary-2: #38bdf8;
+  --bs-accent: #a855f7;
+  --bs-warn: #fbbf24;
+  --bs-danger: #f87171;
+  --bs-text: #e6f1ff;
+  --bs-text-dim: #8aa6c8;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family:
+    'PingFang SC',
+    'Microsoft YaHei',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  background: var(--bs-bg);
+  color: var(--bs-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.4);
+  border-radius: 3px;
+}
