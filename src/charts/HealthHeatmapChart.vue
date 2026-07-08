@@ -31,7 +31,7 @@ const option = computed<EChartsOption | null>(() => ({
   },
   xAxis: {
     type: 'category',
-    data: rooms.value,
+    data: roomOrder,
     splitArea: { show: true },
     axisLine: { lineStyle: { color: 'rgba(138,166,200,0.4)' } },
     axisLabel: { color: '#8aa6c8', fontSize: 14, fontWeight: 'bold' },
