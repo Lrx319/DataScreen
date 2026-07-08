@@ -10,7 +10,7 @@ import LineTrendChart from '@/charts/LineTrendChart.vue'
 import BarRankingChart from '@/charts/BarRankingChart.vue'
 import PieStatusChart from '@/charts/PieStatusChart.vue'
 import RadarAbilityChart from '@/charts/RadarAbilityChart.vue'
-import MapOverviewChart from '@/charts/MapOverviewChart.vue'
+import HealthHeatmapChart from '@/charts/HealthHeatmapChart.vue'
 
 const store = useDashboardStore()
 const { data, loading, error } = storeToRefs(store)
@@ -104,8 +104,8 @@ onMounted(() => {
         </div>
 
         <div class="dashboard__col dashboard__col--center">
-          <BasePanel title="机房机柜分布总览" subtitle="A/B/C/D/E" class="panel-grow">
-            <MapOverviewChart v-if="data" :data="data.map" />
+          <BasePanel title="服务器健康热力图" subtitle="按机房/主机展示CPU负载" class="panel-grow">
+            <HealthHeatmapChart v-if="data" :host-rank="data.hostRank" />
           </BasePanel>
         </div>
 

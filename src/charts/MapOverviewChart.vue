@@ -36,7 +36,7 @@ function buildOption(): echarts.EChartsOption | null {
     tooltip: { trigger: 'item', formatter: '{b}<br/>主机数: {c}' },
     visualMap: {
       min: 0,
-      max: 20,
+      max: 10,
       left: 20,
       bottom: 24,
       text: ['高', '低'],
@@ -70,7 +70,10 @@ function buildOption(): echarts.EChartsOption | null {
 function render() {
   if (!el.value || !chart) return
   const opt = buildOption()
-  if (opt) chart.setOption(opt, true)
+  if (opt) {
+    chart.setOption(opt, true)
+    logger.info('[map] rendered with data:', props.data)
+  }
 }
 
 onMounted(async () => {
@@ -82,7 +85,10 @@ onMounted(async () => {
 
 watch(
   () => props.data,
-  () => render(),
+  async () => {
+    await ensureMap()
+    render()
+  },
   { deep: true },
 )
 
