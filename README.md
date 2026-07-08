@@ -128,13 +128,43 @@ npm run server:build
 
 ---
 
-## 六、双数据源切换
+## 六、数据来源
+
+本项目数据来源为且仅为以下 4 个 Tab 分隔的 dat 文件，位于 `server/data/` 目录：
+
+### 数据文件说明
+
+| 文件 | 内容 | 采样频率 |
+| --- | --- | --- |
+| `host_detail.dat` | 主机资产信息（主机ID、名称、IP、机房、机柜） | 静态数据 |
+| `mod_detail.dat` | 指标字典（7个监控指标的ID、名称、描述、单位） | 静态数据 |
+| `disk_tsar.dat` | 磁盘监控时序数据（磁盘使用率、IO等待时间） | 5分钟采样 |
+| `pref_tsar.dat` | 性能监控时序数据（CPU、内存、网络入/出流量） | 每小时采样 |
+
+### 数据结构
+
+**host_detail.dat（Tab分隔）**：
+```
+host-001	srv-beijing-01	192.168.1.1	A	Rack-A01
+```
+
+**mod_detail.dat（Tab分隔）**：
+```
+cpu	CPU使用率	CPU占用百分比	%
+```
+
+**disk_tsar.dat / pref_tsar.dat（Tab分隔）**：
+```
+host-001	cpu	00:00	45.2
+```
+
+### 双数据源切换
 
 通过环境变量 `VITE_DATA_SOURCE` 控制数据来源：
 
 | 模式         | 取值                    | 行为                                                    |
 | ------------ | ----------------------- | ------------------------------------------------------- |
-| Mock（默认） | `VITE_DATA_SOURCE=mock` | 启动 MSW 拦截请求，返回模拟数据                         |
+| Mock（默认） | `VITE_DATA_SOURCE=mock` | 启动 MSW 拦截请求，返回基于 dat 文件生成的模拟数据       |
 | 真实后端     | `VITE_DATA_SOURCE=db`   | 关闭 MSW，Axios 直连 `VITE_API_BASE_URL` 指定的真实接口 |
 
 ---

@@ -1,25 +1,21 @@
-host-001	srv-beijing-01	192.168.1.1	A	Rack-A01
-host-002	srv-beijing-02	192.168.1.2	A	Rack-A01
-host-003	srv-beijing-03	192.168.1.3	A	Rack-A02
-host-004	srv-beijing-04	192.168.1.4	A	Rack-A02
-host-005	srv-beijing-05	192.168.1.5	A	Rack-A03
-host-006	srv-shanghai-01	192.168.2.1	B	Rack-B01
-host-007	srv-shanghai-02	192.168.2.2	B	Rack-B01
-host-008	srv-shanghai-03	192.168.2.3	B	Rack-B02
-host-009	srv-shanghai-04	192.168.2.4	B	Rack-B02
-host-010	srv-shanghai-05	192.168.2.5	B	Rack-B03
-host-011	srv-guangzhou-01	192.168.3.1	C	Rack-C01
-host-012	srv-guangzhou-02	192.168.3.2	C	Rack-C01
-host-013	srv-guangzhou-03	192.168.3.3	C	Rack-C02
-host-014	srv-guangzhou-04	192.168.3.4	C	Rack-C02
-host-015	srv-shenzhen-01	192.168.4.1	D	Rack-D01
-host-016	srv-shenzhen-02	192.168.4.2	D	Rack-D01
-host-017	srv-shenzhen-03	192.168.4.3	D	Rack-D02
-host-018	srv-hangzhou-01	192.168.5.1	E	Rack-E01
-host-019	srv-hangzhou-02	192.168.5.2	E	Rack-E01
-host-020	srv-hangzhou-03	192.168.5.3	E	Rack-E02
-host-021	srv-beijing-06	192.168.1.6	A	Rack-A03
-host-022	srv-beijing-07	192.168.1.7	A	Rack-A04
-host-023	srv-shanghai-06	192.168.2.6	B	Rack-B03
-host-024	srv-guangzhou-05	192.168.3.5	C	Rack-C03
-host-025	srv-shenzhen-04	192.168.4.4	D	Rack-D02
+hostid	hostname	owner	model	location1	location2
+host001	server-001.hismartlab.cn	陈三	Dell R750	A机房	机柜12
+host002	server-002.hismartlab.cn	钱七	HP DL388	B机房	机柜03
+host003	server-003.hismartlab.cn	林四	Dell R750	E机房	机柜02
+host004	server-004.hismartlab.cn	王二	Huawei 2288H	A机房	机柜01
+host005	server-005.hismartlab.cn	李四	HP DL388	B机房	机柜09
+host006	server-006.hismartlab.cn	王二	Dell R740	E机房	机柜04
+host007	server-007.hismartlab.cn	林四	Huawei 2288H	B机房	机柜08
+host008	server-008.hismartlab.cn	王二	Lenovo SR650	A机房	机柜03
+host009	server-009.hismartlab.cn	林四	Huawei 2288H	C机房	机柜05
+host010	server-010.hismartlab.cn	王五	HP DL388	C机房	机柜02
+host011	server-011.hismartlab.cn	李四	Huawei 2288H	A机房	机柜06
+host012	server-012.hismartlab.cn	刘六	Lenovo SR860	E机房	机柜05
+host013	server-013.hismartlab.cn	黄五	Dell R740	D机房	机柜09
+host014	server-014.hismartlab.cn	李四	Huawei 2288H	A机房	机柜09
+host015	server-015.hismartlab.cn	钱七	Lenovo SR860	E机房	机柜04
+host016	server-016.hismartlab.cn	林四	Dell R750	A机房	机柜11
+host017	server-017.hismartlab.cn	赵六	Lenovo SR650	A机房	机柜04
+host018	server-018.hismartlab.cn	刘六	Dell R750	D机房	机柜05
+host019	server-019.hismartlab.cn	吴十	Lenovo SR860	B机房	机柜06
+host020	server-020.hismartlab.cn	孙八	HP DL388	C机房	机柜12

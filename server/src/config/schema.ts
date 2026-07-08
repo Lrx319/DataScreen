@@ -1,44 +1,96 @@
 export const CREATE_TABLES_SQL = `
 CREATE TABLE IF NOT EXISTS host_detail (
-  host_id VARCHAR(64) PRIMARY KEY,
-  host_name VARCHAR(128) NOT NULL,
-  ip_addr VARCHAR(45) NOT NULL,
-  room VARCHAR(32) NOT NULL,
-  rack VARCHAR(32),
+  hostid VARCHAR(64) PRIMARY KEY,
+  hostname VARCHAR(128) NOT NULL,
+  owner VARCHAR(64),
+  model VARCHAR(64),
+  location1 VARCHAR(32) NOT NULL,
+  location2 VARCHAR(32),
   status TINYINT DEFAULT 1,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS mod_detail (
-  mod_id VARCHAR(32) PRIMARY KEY,
-  mod_name VARCHAR(128) NOT NULL,
-  mod_desc VARCHAR(256),
+  mod VARCHAR(64) PRIMARY KEY,
+  type VARCHAR(16) NOT NULL,
+  desc VARCHAR(128),
   unit VARCHAR(16),
+  tag VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS tsar_detail (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  host_id VARCHAR(64) NOT NULL,
-  mod_id VARCHAR(32) NOT NULL,
-  collect_time DATETIME NOT NULL,
+  ts BIGINT NOT NULL,
+  hostid VARCHAR(64) NOT NULL,
+  type VARCHAR(16) NOT NULL,
+  mod VARCHAR(64) NOT NULL,
   value DOUBLE NOT NULL,
-  FOREIGN KEY (host_id) REFERENCES host_detail(host_id),
-  FOREIGN KEY (mod_id) REFERENCES mod_detail(mod_id),
-  INDEX idx_host_time (host_id, collect_time),
-  INDEX idx_mod_time (mod_id, collect_time)
+  tag VARCHAR(64),
+  FOREIGN KEY (hostid) REFERENCES host_detail(hostid),
+  FOREIGN KEY (mod) REFERENCES mod_detail(mod),
+  INDEX idx_host_ts (hostid, ts),
+  INDEX idx_mod_ts (mod, ts)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `
 
 export const INSERT_MOD_DETAIL_SQL = `
-INSERT INTO mod_detail (mod_id, mod_name, mod_desc, unit) VALUES
-('cpu', 'CPU使用率', 'CPU占用百分比', '%'),
-('mem', '内存使用率', '内存占用百分比', '%'),
-('disk_util', '磁盘使用率', '磁盘空间占用百分比', '%'),
-('disk_io_wait', '磁盘IO等待', '磁盘IO等待时间', 'ms'),
-('net_in', '网络入流量', '网络入站流量', 'KB/s'),
-('net_out', '网络出流量', '网络出站流量', 'KB/s'),
-('load_avg', '系统负载', '系统平均负载', '')
-ON DUPLICATE KEY UPDATE mod_name = VALUES(mod_name), mod_desc = VALUES(mod_desc), unit = VALUES(unit);
+INSERT INTO mod_detail (mod, type, desc, unit, tag) VALUES
+('sda_rqm', 'disk', '磁盘A每秒合并读请求数', 'req/s', 'disk_rqm_per_sec'),
+('sda_read', 'disk', '磁盘A每秒读取扇区数', 'sectors/s', 'disk_rw_sectors'),
+('sda_write', 'disk', '磁盘A每秒写入扇区数', 'sectors/s', 'disk_rw_sectors'),
+('sda_avgrq', 'disk', '磁盘A平均请求扇区大小', 'sectors', 'disk_other_metric'),
+('sda_await', 'disk', '磁盘A平均I/O等待时间', 'ms', 'disk_latency_ms'),
+('sda_util', 'disk', '磁盘A使用率', '%', 'disk_util_percent'),
+('sda_svctm', 'disk', '磁盘A平均服务时间', 'ms', 'disk_latency_ms'),
+('sdb_rqm', 'disk', '磁盘B每秒合并读请求数', 'req/s', 'disk_rqm_per_sec'),
+('sdb_read', 'disk', '磁盘B每秒读取扇区数', 'sectors/s', 'disk_rw_sectors'),
+('sdb_write', 'disk', '磁盘B每秒写入扇区数', 'sectors/s', 'disk_rw_sectors'),
+('sdb_avgrq', 'disk', '磁盘B平均请求扇区大小', 'sectors', 'disk_other_metric'),
+('sdb_await', 'disk', '磁盘B平均I/O等待时间', 'ms', 'disk_latency_ms'),
+('sdb_util', 'disk', '磁盘B使用率', '%', 'disk_util_percent'),
+('sdb_svctm', 'disk', '磁盘B平均服务时间', 'ms', 'disk_latency_ms'),
+('sdc_rqm', 'disk', '磁盘C每秒合并读请求数', 'req/s', 'disk_rqm_per_sec'),
+('sdc_read', 'disk', '磁盘C每秒读取扇区数', 'sectors/s', 'disk_rw_sectors'),
+('sdc_write', 'disk', '磁盘C每秒写入扇区数', 'sectors/s', 'disk_rw_sectors'),
+('sdc_avgrq', 'disk', '磁盘C平均请求扇区大小', 'sectors', 'disk_other_metric'),
+('sdc_await', 'disk', '磁盘C平均I/O等待时间', 'ms', 'disk_latency_ms'),
+('sdc_util', 'disk', '磁盘C使用率', '%', 'disk_util_percent'),
+('sdc_svctm', 'disk', '磁盘C平均服务时间', 'ms', 'disk_latency_ms'),
+('sdd_rqm', 'disk', '磁盘D每秒合并读请求数', 'req/s', 'disk_rqm_per_sec'),
+('sdd_read', 'disk', '磁盘D每秒读取扇区数', 'sectors/s', 'disk_rw_sectors'),
+('sdd_write', 'disk', '磁盘D每秒写入扇区数', 'sectors/s', 'disk_rw_sectors'),
+('sdd_avgrq', 'disk', '磁盘D平均请求扇区大小', 'sectors', 'disk_other_metric'),
+('sdd_await', 'disk', '磁盘D平均I/O等待时间', 'ms', 'disk_latency_ms'),
+('sdd_util', 'disk', '磁盘D使用率', '%', 'disk_util_percent'),
+('sdd_svctm', 'disk', '磁盘D平均服务时间', 'ms', 'disk_latency_ms'),
+('sde_rqm', 'disk', '磁盘E每秒合并读请求数', 'req/s', 'disk_rqm_per_sec'),
+('sde_read', 'disk', '磁盘E每秒读取扇区数', 'sectors/s', 'disk_rw_sectors'),
+('sde_write', 'disk', '磁盘E每秒写入扇区数', 'sectors/s', 'disk_rw_sectors'),
+('sde_avgrq', 'disk', '磁盘E平均请求扇区大小', 'sectors', 'disk_other_metric'),
+('sde_await', 'disk', '磁盘E平均I/O等待时间', 'ms', 'disk_latency_ms'),
+('sde_util', 'disk', '磁盘E使用率', '%', 'disk_util_percent'),
+('sde_svctm', 'disk', '磁盘E平均服务时间', 'ms', 'disk_latency_ms'),
+('cpu_user', 'pref', '用户态CPU使用率', '%', 'cpu_percent'),
+('cpu_sys', 'pref', '系统态CPU使用率', '%', 'cpu_percent'),
+('cpu_wait', 'pref', 'IO等待CPU使用率', '%', 'cpu_percent'),
+('cpu_idle', 'pref', 'CPU空闲率', '%', 'cpu_percent'),
+('cpu_usage', 'pref', 'CPU综合使用率', '%', 'cpu_percent'),
+('mem_used', 'pref', '已使用内存', 'MB', 'mem_metric'),
+('mem_free', 'pref', '空闲内存', 'MB', 'mem_metric'),
+('mem_buff', 'pref', '缓冲区内存', 'MB', 'mem_metric'),
+('mem_cache', 'pref', '缓存内存', 'MB', 'mem_metric'),
+('mem_swap', 'pref', '交换区使用', 'MB', 'mem_metric'),
+('net_in', 'pref', '网络入站带宽', 'MB/s', 'net_speed_mb'),
+('net_out', 'pref', '网络出站带宽', 'MB/s', 'net_speed_mb'),
+('net_pktin', 'pref', '每秒入站数据包数', 'pkt/s', 'net_packets'),
+('net_pktout', 'pref', '每秒出站数据包数', 'pkt/s', 'net_packets'),
+('load1', 'pref', '1分钟平均负载', '', 'load_average'),
+('load5', 'pref', '5分钟平均负载', '', 'load_average'),
+('load15', 'pref', '15分钟平均负载', '', 'load_average'),
+('proc_run', 'pref', '运行中进程数', '个', 'proc_count'),
+('proc_block', 'pref', '阻塞进程数', '个', 'proc_count'),
+('proc_total', 'pref', '总进程数', '个', 'proc_count')
+ON DUPLICATE KEY UPDATE type = VALUES(type), desc = VALUES(desc), unit = VALUES(unit), tag = VALUES(tag);
 `
