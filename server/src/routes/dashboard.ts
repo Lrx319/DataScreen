@@ -95,7 +95,7 @@ router.get('/host-rank', async (req, res) => {
        FROM tsar_detail t JOIN host_detail h ON t.hostid = h.hostid 
        WHERE t.\`mod\` = 'cpu_usage' 
        GROUP BY h.hostname, h.location1 
-       ORDER BY avg_cpu DESC LIMIT 10`,
+       ORDER BY avg_cpu DESC`,
     )
     res.json(rows.map(r => ({ host_name: r.hostname, room: r.location1.replace('机房', ''), avg_cpu: parseFloat(r.avg_cpu.toFixed(2)) })))
   } catch (error) {
