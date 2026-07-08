@@ -1,7 +1,6 @@
 import fs from 'fs'
 import path from 'path'
 import { pool } from '../config/database'
-import { CREATE_TABLES_SQL, INSERT_MOD_DETAIL_SQL } from '../config/schema'
 
 const DATA_DIR = path.join(__dirname, '../../data')
 
@@ -12,6 +11,14 @@ interface HostRecord {
   model: string
   location1: string
   location2: string
+}
+
+interface ModRecord {
+  mod: string
+  type: string
+  desc: string
+  unit: string
+  tag: string
 }
 
 interface TsarRecord {
@@ -30,37 +37,57 @@ async function readDatFile(fileName: string): Promise<string[][]> {
   return lines.map((line) => line.split('\t'))
 }
 
-function getRoomName(roomCode: string): string {
-  const roomMap: Record<string, string> = {
-    A: 'A机房',
-    B: 'B机房',
-    C: 'C机房',
-    D: 'D机房',
-    E: 'E机房',
-  }
-  return roomMap[roomCode] || roomCode + '机房'
-}
+const CREATE_TABLES_SQL = `
+CREATE TABLE IF NOT EXISTS host_detail (
+  hostid VARCHAR(64) PRIMARY KEY,
+  hostname VARCHAR(128) NOT NULL,
+  owner VARCHAR(64),
+  model VARCHAR(64),
+  location1 VARCHAR(32) NOT NULL,
+  location2 VARCHAR(32),
+  status TINYINT DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-function getRackName(rackCode: string): string {
-  if (rackCode.startsWith('Rack-')) {
-    return '机柜' + rackCode.replace('Rack-', '')
-  }
-  return rackCode
-}
+CREATE TABLE IF NOT EXISTS mod_detail (
+  mod VARCHAR(64) PRIMARY KEY,
+  type VARCHAR(16) NOT NULL,
+  \`desc\` VARCHAR(128),
+  unit VARCHAR(16),
+  tag VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS tsar_detail (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  ts BIGINT NOT NULL,
+  hostid VARCHAR(64) NOT NULL,
+  type VARCHAR(16) NOT NULL,
+  mod VARCHAR(64) NOT NULL,
+  value DOUBLE NOT NULL,
+  tag VARCHAR(64),
+  FOREIGN KEY (hostid) REFERENCES host_detail(hostid),
+  FOREIGN KEY (mod) REFERENCES mod_detail(mod),
+  INDEX idx_host_ts (hostid, ts),
+  INDEX idx_mod_ts (mod, ts)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`
 
 async function importHostDetail(): Promise<void> {
   const rows = await readDatFile('host_detail.dat')
   const records: HostRecord[] = []
   
-  for (const row of rows) {
-    if (row.length < 5) continue
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i]
+    if (row.length < 6) continue
     records.push({
-      hostid: row[0].trim().replace(/-/g, ''),
-      hostname: row[1].trim() + '.hismartlab.cn',
-      owner: '未知',
-      model: 'Dell R750',
-      location1: getRoomName(row[3].trim()),
-      location2: getRackName(row[4].trim()),
+      hostid: row[0].trim(),
+      hostname: row[1].trim(),
+      owner: row[2].trim(),
+      model: row[3].trim(),
+      location1: row[4].trim(),
+      location2: row[5].trim(),
     })
   }
   
@@ -72,43 +99,43 @@ async function importHostDetail(): Promise<void> {
 }
 
 async function importModDetail(): Promise<void> {
-  await pool.query(INSERT_MOD_DETAIL_SQL)
-  console.log('[ETL] Imported mod detail records (55 items)')
-}
-
-function getModTag(mod: string): string {
-  if (mod.includes('_util')) return 'disk_util_percent'
-  if (mod.includes('_await') || mod.includes('_svctm')) return 'disk_latency_ms'
-  if (mod.includes('_rqm')) return 'disk_rqm_per_sec'
-  if (mod.includes('_read') || mod.includes('_write')) return 'disk_rw_sectors'
-  if (mod.includes('_avgrq')) return 'disk_other_metric'
-  if (mod.startsWith('cpu_')) return 'cpu_percent'
-  if (mod.startsWith('mem_')) return 'mem_metric'
-  if (mod.startsWith('net_')) return mod.includes('pkt') ? 'net_packets' : 'net_speed_mb'
-  if (mod.startsWith('load')) return 'load_average'
-  if (mod.startsWith('proc_')) return 'proc_count'
-  return ''
+  const rows = await readDatFile('mod_detail.dat')
+  const records: ModRecord[] = []
+  
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i]
+    if (row.length < 5) continue
+    records.push({
+      mod: row[0].trim(),
+      type: row[1].trim(),
+      desc: row[2].trim(),
+      unit: row[3].trim(),
+      tag: row[4].trim(),
+    })
+  }
+  
+  const sql = 'INSERT INTO mod_detail (mod, type, `desc`, unit, tag) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE type = VALUES(type), `desc` = VALUES(`desc`), unit = VALUES(unit), tag = VALUES(tag)'
+  const values = records.map((r) => [r.mod, r.type, r.desc, r.unit, r.tag])
+  
+  await pool.query(sql, values)
+  console.log(`[ETL] Imported ${records.length} mod records`)
 }
 
 async function importDiskTsar(): Promise<void> {
   const rows = await readDatFile('disk_tsar.dat')
   const records: TsarRecord[] = []
   
-  for (const row of rows) {
-    if (row.length < 4) continue
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i]
+    if (row.length < 6) continue
     try {
-      const timeParts = row[2].trim().split(':')
-      const hour = parseInt(timeParts[0], 10)
-      const minute = parseInt(timeParts[1] || '0', 10)
-      const ts = new Date('2026-07-01T' + String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0') + ':00').getTime()
-      
       records.push({
-        ts,
-        hostid: row[0].trim().replace(/-/g, ''),
-        type: 'disk',
-        mod: row[1].trim(),
-        value: parseFloat(row[3].trim()),
-        tag: getModTag(row[1].trim()),
+        ts: parseInt(row[0].trim(), 10),
+        hostid: row[1].trim(),
+        type: row[2].trim(),
+        mod: row[3].trim(),
+        value: parseFloat(row[4].trim()),
+        tag: row[5].trim(),
       })
     } catch {
       continue
@@ -126,20 +153,17 @@ async function importPrefTsar(): Promise<void> {
   const rows = await readDatFile('pref_tsar.dat')
   const records: TsarRecord[] = []
   
-  for (const row of rows) {
-    if (row.length < 4) continue
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i]
+    if (row.length < 6) continue
     try {
-      const timeParts = row[2].trim().split(':')
-      const hour = parseInt(timeParts[0], 10)
-      const ts = new Date('2026-07-01T' + String(hour).padStart(2, '0') + ':00:00').getTime()
-      
       records.push({
-        ts,
-        hostid: row[0].trim().replace(/-/g, ''),
-        type: 'pref',
-        mod: row[1].trim(),
-        value: parseFloat(row[3].trim()),
-        tag: getModTag(row[1].trim()),
+        ts: parseInt(row[0].trim(), 10),
+        hostid: row[1].trim(),
+        type: row[2].trim(),
+        mod: row[3].trim(),
+        value: parseFloat(row[4].trim()),
+        tag: row[5].trim(),
       })
     } catch {
       continue

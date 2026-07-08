@@ -14,7 +14,7 @@ router.get('/summary', async (req, res) => {
     )
     
     const [diskIoAvg] = await pool.query<{ avg: number }[]>(
-      `SELECT AVG(value) as avg FROM tsar_detail WHERE mod LIKE '%_await'`,
+      `SELECT AVG(value) as avg FROM tsar_detail WHERE tag = 'disk_latency_ms'`,
     )
     
     const [memAvg] = await pool.query<{ avg: number }[]>(
@@ -37,7 +37,7 @@ router.get('/room-stats', async (req, res) => {
     const [rows] = await pool.query<{ location1: string; count: number }[]>(
       `SELECT location1, COUNT(*) as count FROM host_detail GROUP BY location1 ORDER BY location1`,
     )
-    res.json(rows.map(r => ({ room: r.location1.replace('机房', ''), count: r.count })))
+    res.json(rows.map(r => ({ room: r.location1, count: r.count })))
   } catch (error) {
     res.status(500).json({ error: (error as Error).message })
   }
@@ -72,7 +72,7 @@ router.get('/host-rank', async (req, res) => {
        GROUP BY h.hostname, h.location1 
        ORDER BY avg_cpu DESC LIMIT 10`,
     )
-    res.json(rows.map(r => ({ host_name: r.hostname.replace('.hismartlab.cn', ''), room: r.location1.replace('机房', ''), avg_cpu: parseFloat(r.avg_cpu.toFixed(2)) })))
+    res.json(rows.map(r => ({ host_name: r.hostname, room: r.location1.replace('机房', ''), avg_cpu: parseFloat(r.avg_cpu.toFixed(2)) })))
   } catch (error) {
     res.status(500).json({ error: (error as Error).message })
   }
@@ -90,7 +90,7 @@ router.get('/radar', async (req, res) => {
       `SELECT AVG(value) as avg FROM tsar_detail WHERE mod = 'net_in'`,
     )
     const [diskIo] = await pool.query<{ avg: number }[]>(
-      `SELECT AVG(value) as avg FROM tsar_detail WHERE mod LIKE '%_await'`,
+      `SELECT AVG(value) as avg FROM tsar_detail WHERE tag = 'disk_latency_ms'`,
     )
     
     res.json([
@@ -124,7 +124,7 @@ router.get('/alerts', async (req, res) => {
        ORDER BY t.ts DESC LIMIT 20`,
     )
     res.json(rows.map(r => ({
-      host_name: r.hostname.replace('.hismartlab.cn', ''),
+      host_name: r.hostname,
       room: r.location1.replace('机房', ''),
       mod_name: r.desc,
       value: parseFloat(r.value.toFixed(2)),

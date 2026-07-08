@@ -51,25 +51,22 @@ const metrics = computed(() => {
 })
 
 const roomStatsForPie = computed(() => {
-  const roomMap: Record<string, string> = {
-    'A': '北京机房',
-    'B': '上海机房',
-    'C': '广州机房',
-    'D': '深圳机房',
-    'E': '杭州机房',
-  }
   return data.value?.roomStats.map((r) => ({
-    name: roomMap[r.room] || `机房${r.room}`,
+    name: r.room,
     value: r.count,
   })) || []
 })
 
-const roomColorMap: Record<string, string> = {
-  'A': '#22d3ee',
-  'B': '#38bdf8',
-  'C': '#a855f7',
-  'D': '#34d399',
-  'E': '#fbbf24',
+const getRoomColor = (room: string): string => {
+  const roomCode = room.charAt(0)
+  const colorMap: Record<string, string> = {
+    'A': '#22d3ee',
+    'B': '#38bdf8',
+    'C': '#a855f7',
+    'D': '#34d399',
+    'E': '#fbbf24',
+  }
+  return colorMap[roomCode] || '#8aa6c8'
 }
 
 onMounted(() => {
@@ -134,7 +131,7 @@ onMounted(() => {
                 class="activity__row"
               >
                 <span class="activity__time">{{ item.collect_time.split(' ')[1] || item.collect_time }}</span>
-                <span class="activity__room" :style="{ background: roomColorMap[item.room] + '20', color: roomColorMap[item.room] }">
+                <span class="activity__room" :style="{ background: getRoomColor(item.room) + '20', color: getRoomColor(item.room) }">
                   {{ item.room }}
                 </span>
                 <span class="activity__host">{{ item.host_name }}</span>

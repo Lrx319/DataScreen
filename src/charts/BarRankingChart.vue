@@ -30,9 +30,9 @@ const option = computed<EChartsOption | null>(() => ({
   },
   yAxis: {
     type: 'category',
-    data: sorted.value.map((d) => d.host_name.replace('srv-', '')),
+    data: sorted.value.map((d) => d.host_name.replace('.hismartlab.cn', '')),
     axisLine: { lineStyle: { color: 'rgba(138,166,200,0.4)' } },
-    axisLabel: { color: '#8aa6c8', fontSize: 11 },
+    axisLabel: { color: '#8aa6c8', fontSize: 10 },
   },
   series: [
     {
