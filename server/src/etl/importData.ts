@@ -1,7 +1,9 @@
 import fs from 'fs'
 import path from 'path'
+import { fileURLToPath } from 'url'
 import { pool } from '../config/database'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = path.join(__dirname, '../../data')
 
 interface HostRecord {
@@ -37,7 +39,7 @@ async function readDatFile(fileName: string): Promise<string[][]> {
   return lines.map((line) => line.split('\t'))
 }
 
-const CREATE_TABLES_SQL = `
+const CREATE_TABLE_HOST_SQL = `
 CREATE TABLE IF NOT EXISTS host_detail (
   hostid VARCHAR(64) PRIMARY KEY,
   hostname VARCHAR(128) NOT NULL,
@@ -49,28 +51,32 @@ CREATE TABLE IF NOT EXISTS host_detail (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`
 
+const CREATE_TABLE_MOD_SQL = `
 CREATE TABLE IF NOT EXISTS mod_detail (
-  mod VARCHAR(64) PRIMARY KEY,
-  type VARCHAR(16) NOT NULL,
+  \`mod\` VARCHAR(64) PRIMARY KEY,
+  \`type\` VARCHAR(16) NOT NULL,
   \`desc\` VARCHAR(128),
-  unit VARCHAR(16),
-  tag VARCHAR(64),
+  \`unit\` VARCHAR(16),
+  \`tag\` VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`
 
+const CREATE_TABLE_TSAR_SQL = `
 CREATE TABLE IF NOT EXISTS tsar_detail (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   ts BIGINT NOT NULL,
   hostid VARCHAR(64) NOT NULL,
-  type VARCHAR(16) NOT NULL,
-  mod VARCHAR(64) NOT NULL,
+  \`type\` VARCHAR(16) NOT NULL,
+  \`mod\` VARCHAR(64) NOT NULL,
   value DOUBLE NOT NULL,
-  tag VARCHAR(64),
+  \`tag\` VARCHAR(64),
   FOREIGN KEY (hostid) REFERENCES host_detail(hostid),
-  FOREIGN KEY (mod) REFERENCES mod_detail(mod),
+  FOREIGN KEY (\`mod\`) REFERENCES mod_detail(\`mod\`),
   INDEX idx_host_ts (hostid, ts),
-  INDEX idx_mod_ts (mod, ts)
+  INDEX idx_mod_ts (\`mod\`, ts)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `
 
@@ -91,10 +97,10 @@ async function importHostDetail(): Promise<void> {
     })
   }
   
-  const sql = 'INSERT INTO host_detail (hostid, hostname, owner, model, location1, location2) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE hostname = VALUES(hostname), owner = VALUES(owner), model = VALUES(model), location1 = VALUES(location1), location2 = VALUES(location2)'
-  const values = records.map((r) => [r.hostid, r.hostname, r.owner, r.model, r.location1, r.location2])
-  
-  await pool.query(sql, values)
+  for (const record of records) {
+    const sql = 'INSERT INTO host_detail (hostid, hostname, owner, model, location1, location2) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE hostname = VALUES(hostname), owner = VALUES(owner), model = VALUES(model), location1 = VALUES(location1), location2 = VALUES(location2)'
+    await pool.query(sql, [record.hostid, record.hostname, record.owner, record.model, record.location1, record.location2])
+  }
   console.log(`[ETL] Imported ${records.length} host records`)
 }
 
@@ -114,10 +120,10 @@ async function importModDetail(): Promise<void> {
     })
   }
   
-  const sql = 'INSERT INTO mod_detail (mod, type, `desc`, unit, tag) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE type = VALUES(type), `desc` = VALUES(`desc`), unit = VALUES(unit), tag = VALUES(tag)'
-  const values = records.map((r) => [r.mod, r.type, r.desc, r.unit, r.tag])
-  
-  await pool.query(sql, values)
+  for (const record of records) {
+    const sql = 'INSERT INTO mod_detail (`mod`, `type`, `desc`, `unit`, `tag`) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `type` = VALUES(`type`), `desc` = VALUES(`desc`), `unit` = VALUES(`unit`), `tag` = VALUES(`tag`)'
+    await pool.query(sql, [record.mod, record.type, record.desc, record.unit, record.tag])
+  }
   console.log(`[ETL] Imported ${records.length} mod records`)
 }
 
@@ -142,10 +148,12 @@ async function importDiskTsar(): Promise<void> {
     }
   }
   
-  const sql = 'INSERT INTO tsar_detail (ts, hostid, type, mod, value, tag) VALUES (?, ?, ?, ?, ?, ?)'
-  const values = records.map((r) => [r.ts, r.hostid, r.type, r.mod, r.value, r.tag])
-  
-  await pool.query(sql, values)
+  const sql = 'INSERT INTO tsar_detail (ts, hostid, `type`, `mod`, value, `tag`) VALUES (?, ?, ?, ?, ?, ?)'
+  const batchSize = 1000
+  for (let i = 0; i < records.length; i += batchSize) {
+    const batch = records.slice(i, i + batchSize)
+    await Promise.all(batch.map(r => pool.query(sql, [r.ts, r.hostid, r.type, r.mod, r.value, r.tag])))
+  }
   console.log(`[ETL] Imported ${records.length} disk tsar records`)
 }
 
@@ -170,10 +178,12 @@ async function importPrefTsar(): Promise<void> {
     }
   }
   
-  const sql = 'INSERT INTO tsar_detail (ts, hostid, type, mod, value, tag) VALUES (?, ?, ?, ?, ?, ?)'
-  const values = records.map((r) => [r.ts, r.hostid, r.type, r.mod, r.value, r.tag])
-  
-  await pool.query(sql, values)
+  const sql = 'INSERT INTO tsar_detail (ts, hostid, `type`, `mod`, value, `tag`) VALUES (?, ?, ?, ?, ?, ?)'
+  const batchSize = 1000
+  for (let i = 0; i < records.length; i += batchSize) {
+    const batch = records.slice(i, i + batchSize)
+    await Promise.all(batch.map(r => pool.query(sql, [r.ts, r.hostid, r.type, r.mod, r.value, r.tag])))
+  }
   console.log(`[ETL] Imported ${records.length} pref tsar records`)
 }
 
@@ -181,7 +191,9 @@ async function main(): Promise<void> {
   try {
     console.log('[ETL] Starting data import...')
     
-    await pool.query(CREATE_TABLES_SQL)
+    await pool.query(CREATE_TABLE_HOST_SQL)
+    await pool.query(CREATE_TABLE_MOD_SQL)
+    await pool.query(CREATE_TABLE_TSAR_SQL)
     console.log('[ETL] Tables created/verified')
     
     await importModDetail()

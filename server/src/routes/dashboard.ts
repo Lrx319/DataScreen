@@ -10,22 +10,38 @@ router.get('/summary', async (req, res) => {
     )
     
     const [cpuAvg] = await pool.query<{ avg: number }[]>(
-      `SELECT AVG(value) as avg FROM tsar_detail WHERE mod = 'cpu_usage'`,
+      `SELECT AVG(value) as avg FROM tsar_detail WHERE \`mod\` = 'cpu_usage'`,
     )
     
     const [diskIoAvg] = await pool.query<{ avg: number }[]>(
-      `SELECT AVG(value) as avg FROM tsar_detail WHERE tag = 'disk_latency_ms'`,
+      `SELECT AVG(value) as avg FROM tsar_detail WHERE \`tag\` = 'disk_latency_ms'`,
     )
     
-    const [memAvg] = await pool.query<{ avg: number }[]>(
-      `SELECT AVG(value) as avg FROM tsar_detail WHERE mod = 'mem_used'`,
+    const [memUsed] = await pool.query<{ avg: number }[]>(
+      `SELECT AVG(value) as avg FROM tsar_detail WHERE \`mod\` = 'mem_used'`,
     )
+    const [memFree] = await pool.query<{ avg: number }[]>(
+      `SELECT AVG(value) as avg FROM tsar_detail WHERE \`mod\` = 'mem_free'`,
+    )
+    const [memBuff] = await pool.query<{ avg: number }[]>(
+      `SELECT AVG(value) as avg FROM tsar_detail WHERE \`mod\` = 'mem_buff'`,
+    )
+    const [memCache] = await pool.query<{ avg: number }[]>(
+      `SELECT AVG(value) as avg FROM tsar_detail WHERE \`mod\` = 'mem_cache'`,
+    )
+    
+    const used = memUsed[0].avg || 0
+    const free = memFree[0].avg || 0
+    const buff = memBuff[0].avg || 0
+    const cache = memCache[0].avg || 0
+    const total = used + free + buff + cache
+    const memPercent = total > 0 ? (used / total * 100) : 0
     
     res.json({
       serverCount: hostCount[0].count,
       avgCpuUsage: cpuAvg[0].avg ? parseFloat(cpuAvg[0].avg.toFixed(2)) : 0,
       avgDiskIoWait: diskIoAvg[0].avg ? parseFloat(diskIoAvg[0].avg.toFixed(2)) : 0,
-      avgMemUsage: memAvg[0].avg ? parseFloat(memAvg[0].avg.toFixed(2)) : 0,
+      avgMemUsage: parseFloat(memPercent.toFixed(2)),
     })
   } catch (error) {
     res.status(500).json({ error: (error as Error).message })
@@ -47,13 +63,13 @@ router.get('/trend', async (req, res) => {
   try {
     const [cpuTrend] = await pool.query<{ hour: string; avg_cpu: number }[]>(
       `SELECT DATE_FORMAT(FROM_UNIXTIME(ts/1000), '%H:00') as hour, AVG(value) as avg_cpu 
-       FROM tsar_detail WHERE mod = 'cpu_usage' 
+       FROM tsar_detail WHERE \`mod\` = 'cpu_usage' 
        GROUP BY DATE_FORMAT(FROM_UNIXTIME(ts/1000), '%H:00') ORDER BY hour`,
     )
     
     const [memTrend] = await pool.query<{ hour: string; avg_mem: number }[]>(
       `SELECT DATE_FORMAT(FROM_UNIXTIME(ts/1000), '%H:00') as hour, AVG(value) as avg_mem 
-       FROM tsar_detail WHERE mod = 'mem_used' 
+       FROM tsar_detail WHERE \`mod\` = 'mem_used' 
        GROUP BY DATE_FORMAT(FROM_UNIXTIME(ts/1000), '%H:00') ORDER BY hour`,
     )
     
@@ -68,7 +84,7 @@ router.get('/host-rank', async (req, res) => {
     const [rows] = await pool.query<{ hostname: string; location1: string; avg_cpu: number }[]>(
       `SELECT h.hostname, h.location1, AVG(t.value) as avg_cpu 
        FROM tsar_detail t JOIN host_detail h ON t.hostid = h.hostid 
-       WHERE t.mod = 'cpu_usage' 
+       WHERE t.\`mod\` = 'cpu_usage' 
        GROUP BY h.hostname, h.location1 
        ORDER BY avg_cpu DESC LIMIT 10`,
     )
@@ -81,16 +97,16 @@ router.get('/host-rank', async (req, res) => {
 router.get('/radar', async (req, res) => {
   try {
     const [cpu] = await pool.query<{ avg: number }[]>(
-      `SELECT AVG(value) as avg FROM tsar_detail WHERE mod = 'cpu_usage'`,
+      `SELECT AVG(value) as avg FROM tsar_detail WHERE \`mod\` = 'cpu_usage'`,
     )
     const [mem] = await pool.query<{ avg: number }[]>(
-      `SELECT AVG(value) as avg FROM tsar_detail WHERE mod = 'mem_used'`,
+      `SELECT AVG(value) as avg FROM tsar_detail WHERE \`mod\` = 'mem_used'`,
     )
     const [netIn] = await pool.query<{ avg: number }[]>(
-      `SELECT AVG(value) as avg FROM tsar_detail WHERE mod = 'net_in'`,
+      `SELECT AVG(value) as avg FROM tsar_detail WHERE \`mod\` = 'net_in'`,
     )
     const [diskIo] = await pool.query<{ avg: number }[]>(
-      `SELECT AVG(value) as avg FROM tsar_detail WHERE tag = 'disk_latency_ms'`,
+      `SELECT AVG(value) as avg FROM tsar_detail WHERE \`tag\` = 'disk_latency_ms'`,
     )
     
     res.json([
@@ -114,13 +130,13 @@ router.get('/alerts', async (req, res) => {
       unit: string
       ts: number
     }[]>(
-      `SELECT h.hostname, h.location1, m.desc, t.value, m.unit, t.ts 
+      `SELECT h.hostname, h.location1, m.\`desc\`, t.value, m.\`unit\`, t.ts 
        FROM tsar_detail t 
        JOIN host_detail h ON t.hostid = h.hostid 
-       JOIN mod_detail m ON t.mod = m.mod 
-       WHERE (m.tag = 'disk_util_percent' AND t.value > 90) 
-          OR (m.tag = 'cpu_percent' AND t.value > 85) 
-          OR (m.tag = 'disk_latency_ms' AND t.value > 20) 
+       JOIN mod_detail m ON t.\`mod\` = m.\`mod\` 
+       WHERE (m.\`tag\` = 'disk_util_percent' AND t.value > 90) 
+          OR (m.\`tag\` = 'cpu_percent' AND t.value > 85) 
+          OR (m.\`tag\` = 'disk_latency_ms' AND t.value > 20) 
        ORDER BY t.ts DESC LIMIT 20`,
     )
     res.json(rows.map(r => ({
