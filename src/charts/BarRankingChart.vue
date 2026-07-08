@@ -1,30 +1,45 @@
 <script setup lang="ts">
-// 城市数据排名柱状图
 import { computed } from 'vue'
 import type { EChartsOption } from 'echarts'
 import { useEcharts } from '@/utils/chart'
-import type { CityRank } from '@/types/dashboard'
 
-const props = defineProps<{ data: CityRank[] }>()
+interface HostRank {
+  host_name: string
+  room: string
+  avg_cpu: number
+}
 
-const sorted = computed(() => [...props.data].sort((a, b) => a.value - b.value))
+const props = defineProps<{ data: HostRank[] }>()
+
+const sorted = computed(() => [...props.data].sort((a, b) => a.avg_cpu - b.avg_cpu))
 
 const option = computed<EChartsOption | null>(() => ({
-  grid: { top: 16, right: 40, bottom: 16, left: 60 },
-  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-  xAxis: { type: 'value', axisLabel: { color: '#8aa6c8' }, splitLine: { show: false } },
+  grid: { top: 16, right: 60, bottom: 16, left: 80 },
+  tooltip: { 
+    trigger: 'axis', 
+    axisPointer: { type: 'shadow' },
+    formatter: (params: any) => {
+      const data = sorted.value[params[0].dataIndex]
+      return `${data.host_name}<br/>机房: ${data.room}<br/>CPU使用率: ${data.avg_cpu}%`
+    }
+  },
+  xAxis: { 
+    type: 'value', 
+    axisLabel: { color: '#8aa6c8', formatter: '{value}%' }, 
+    splitLine: { show: false } 
+  },
   yAxis: {
     type: 'category',
-    data: sorted.value.map((d) => d.name),
+    data: sorted.value.map((d) => d.host_name.replace('srv-', '')),
     axisLine: { lineStyle: { color: 'rgba(138,166,200,0.4)' } },
-    axisLabel: { color: '#8aa6c8' },
+    axisLabel: { color: '#8aa6c8', fontSize: 11 },
   },
   series: [
     {
       type: 'bar',
-      data: sorted.value.map((d) => d.value),
+      data: sorted.value.map((d) => d.avg_cpu),
       barWidth: 12,
-      label: { show: true, position: 'right', color: '#e6f1ff' },
+      label: { show: true, position: 'right', color: '#e6f1ff', formatter: '{c}%' },
       itemStyle: {
         borderRadius: [0, 6, 6, 0],
         color: {
@@ -34,8 +49,8 @@ const option = computed<EChartsOption | null>(() => ({
           x2: 1,
           y2: 0,
           colorStops: [
-            { offset: 0, color: '#38bdf8' },
-            { offset: 1, color: '#22d3ee' },
+            { offset: 0, color: '#f97316' },
+            { offset: 1, color: '#fbbf24' },
           ],
         },
       },

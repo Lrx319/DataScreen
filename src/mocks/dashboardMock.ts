@@ -1,152 +1,98 @@
-// 明格大屏 模拟数据集（统一存放，禁止硬编码进组件）
 import type {
-  ActivityItem,
-  CategoryShare,
-  CityRank,
+  AlertItem,
   DashboardData,
+  HostRank,
   MapPoint,
   RadarAbility,
+  RoomStats,
   SummaryMetrics,
-  TrendPoint,
 } from '@/types/dashboard'
 
-/** 核心汇总指标 */
 function buildSummary(): SummaryMetrics {
   return {
-    todayVisits: 128_640,
-    realtimeOrders: 3_872,
-    activeUsers: 21_536,
-    systemHealth: 97.4,
+    serverCount: 25,
+    avgCpuUsage: 67.8,
+    avgDiskIoWait: 18.5,
+    avgMemUsage: 76.2,
   }
 }
 
-/** 时间趋势数据（近 12 个时间点） */
-function buildTrend(): TrendPoint[] {
-  const labels = [
-    '08:00',
-    '09:00',
-    '10:00',
-    '11:00',
-    '12:00',
-    '13:00',
-    '14:00',
-    '15:00',
-    '16:00',
-    '17:00',
-    '18:00',
-    '19:00',
-  ]
-  const base = [4200, 6800, 9200, 8700, 5400, 6100, 9800, 11_200, 10_400, 7600, 8900, 12_300]
-  return labels.map((time, i) => ({ time, value: base[i] }))
-}
-
-/** 分类占比数据 */
-function buildCategory(): CategoryShare[] {
+function buildRoomStats(): RoomStats[] {
   return [
-    { name: '电商零售', value: 38 },
-    { name: '在线教育', value: 22 },
-    { name: '本地生活', value: 18 },
-    { name: '企业服务', value: 14 },
-    { name: '其他', value: 8 },
+    { room: 'A', count: 7 },
+    { room: 'B', count: 6 },
+    { room: 'C', count: 5 },
+    { room: 'D', count: 4 },
+    { room: 'E', count: 3 },
   ]
 }
 
-/** 城市数据排名 */
-function buildCityRank(): CityRank[] {
+function buildTrend() {
+  const hours = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:00']
+  const cpuValues = [45.2, 38.6, 72.5, 82.3, 78.6, 85.4, 76.8]
+  const memValues = [68.3, 62.4, 78.6, 85.2, 82.1, 86.7, 81.3]
+  return {
+    cpu: hours.map((hour, i) => ({ hour, avg_cpu: cpuValues[i] })),
+    mem: hours.map((hour, i) => ({ hour, avg_mem: memValues[i] })),
+  }
+}
+
+function buildHostRank(): HostRank[] {
   return [
-    { name: '北京', value: 9200 },
-    { name: '上海', value: 8800 },
-    { name: '广州', value: 7600 },
-    { name: '深圳', value: 7400 },
-    { name: '杭州', value: 6100 },
-    { name: '成都', value: 5300 },
-    { name: '武汉', value: 4700 },
-    { name: '西安', value: 3900 },
+    { host_name: 'srv-shanghai-04', room: 'B', avg_cpu: 91.4 },
+    { host_name: 'srv-shanghai-06', room: 'B', avg_cpu: 89.2 },
+    { host_name: 'srv-beijing-03', room: 'A', avg_cpu: 88.5 },
+    { host_name: 'srv-shenzhen-04', room: 'D', avg_cpu: 86.4 },
+    { host_name: 'srv-beijing-06', room: 'A', avg_cpu: 82.7 },
+    { host_name: 'srv-shenzhen-02', room: 'D', avg_cpu: 78.3 },
+    { host_name: 'srv-shanghai-02', room: 'B', avg_cpu: 78.6 },
+    { host_name: 'srv-beijing-07', room: 'A', avg_cpu: 75.3 },
+    { host_name: 'srv-guangzhou-03', room: 'C', avg_cpu: 72.5 },
+    { host_name: 'srv-hangzhou-01', room: 'E', avg_cpu: 68.4 },
   ]
 }
 
-/** 雷达多维能力数据 */
 function buildRadar(): RadarAbility[] {
   return [
-    { dimension: '处理能力', value: 88, target: 90 },
-    { dimension: '稳定性', value: 92, target: 95 },
-    { dimension: '安全性', value: 85, target: 90 },
-    { dimension: '扩展性', value: 78, target: 85 },
-    { dimension: '响应速度', value: 90, target: 92 },
-    { dimension: '可用性', value: 95, target: 98 },
+    { dimension: 'CPU使用率', value: 67.8, max: 100 },
+    { dimension: '内存使用率', value: 76.2, max: 100 },
+    { dimension: '网络入流量', value: 285.6, max: 1000 },
+    { dimension: '磁盘IO等待', value: 18.5, max: 100 },
   ]
 }
 
-/** 实时动态/告警列表 */
-function buildActivity(): ActivityItem[] {
-  const now = Date.now()
-  const make = (offset: number, level: ActivityItem['level'], message: string): ActivityItem => ({
-    id: `act-${now}-${offset}`,
-    time: new Date(now - offset * 1000).toLocaleTimeString('zh-CN', { hour12: false }),
-    level,
-    message,
-  })
+function buildAlerts(): AlertItem[] {
   return [
-    make(5, 'info', '华东节点订单处理完成，耗时 32ms'),
-    make(22, 'warning', '华南机房 CPU 使用率超过 80%'),
-    make(48, 'info', '数据同步任务执行成功'),
-    make(75, 'error', '支付网关出现短暂超时，已自动重试'),
-    make(120, 'info', '新增活跃用户 +1,204'),
-    make(160, 'warning', '风控系统触发 3 次异常登录预警'),
-    make(210, 'info', '缓存命中率回升至 96.2%'),
-    make(260, 'info', '夜间批处理任务已排期'),
+    { host_name: 'srv-beijing-03', room: 'A', mod_name: 'CPU使用率', value: 88.5, unit: '%', collect_time: '2026-07-01 00:00:00' },
+    { host_name: 'srv-shanghai-04', room: 'B', mod_name: 'CPU使用率', value: 91.4, unit: '%', collect_time: '2026-07-01 01:00:00' },
+    { host_name: 'srv-guangzhou-03', room: 'C', mod_name: 'CPU使用率', value: 82.4, unit: '%', collect_time: '2026-07-01 02:00:00' },
+    { host_name: 'srv-beijing-03', room: 'A', mod_name: '磁盘IO等待', value: 25.6, unit: 'ms', collect_time: '2026-07-01 00:00:00' },
+    { host_name: 'srv-shanghai-04', room: 'B', mod_name: '磁盘IO等待', value: 28.7, unit: 'ms', collect_time: '2026-07-01 00:05:00' },
+    { host_name: 'srv-guangzhou-03', room: 'C', mod_name: '磁盘IO等待', value: 24.3, unit: 'ms', collect_time: '2026-07-01 00:10:00' },
+    { host_name: 'srv-hangzhou-01', room: 'E', mod_name: '磁盘使用率', value: 93.2, unit: '%', collect_time: '2026-07-01 00:20:00' },
+    { host_name: 'srv-shanghai-04', room: 'B', mod_name: '磁盘使用率', value: 94.1, unit: '%', collect_time: '2026-07-01 00:05:00' },
+    { host_name: 'srv-beijing-03', room: 'A', mod_name: '磁盘使用率', value: 92.5, unit: '%', collect_time: '2026-07-01 00:00:00' },
+    { host_name: 'srv-shanghai-06', room: 'B', mod_name: 'CPU使用率', value: 91.8, unit: '%', collect_time: '2026-07-01 20:00:00' },
   ]
 }
 
-/** 地图态势数据（省份访问量） */
 function buildMap(): MapPoint[] {
   return [
-    { name: '北京', value: 9200 },
-    { name: '天津', value: 3200 },
-    { name: '上海', value: 8800 },
-    { name: '重庆', value: 4100 },
-    { name: '河北', value: 5200 },
-    { name: '河南', value: 6100 },
-    { name: '云南', value: 2600 },
-    { name: '辽宁', value: 3900 },
-    { name: '黑龙江', value: 3000 },
-    { name: '湖南', value: 4300 },
-    { name: '安徽', value: 3700 },
-    { name: '山东', value: 7200 },
-    { name: '新疆', value: 1800 },
-    { name: '江苏', value: 8000 },
-    { name: '浙江', value: 7600 },
-    { name: '江西', value: 2900 },
-    { name: '湖北', value: 5000 },
-    { name: '广西', value: 3100 },
-    { name: '甘肃', value: 1700 },
-    { name: '山西', value: 3400 },
-    { name: '内蒙古', value: 2100 },
-    { name: '陕西', value: 3900 },
-    { name: '吉林', value: 2500 },
-    { name: '福建', value: 4600 },
-    { name: '贵州', value: 2300 },
-    { name: '广东', value: 9800 },
-    { name: '青海', value: 900 },
-    { name: '西藏', value: 700 },
-    { name: '四川', value: 6700 },
-    { name: '宁夏', value: 800 },
-    { name: '海南', value: 1200 },
-    { name: '台湾', value: 1500 },
-    { name: '香港', value: 2000 },
-    { name: '澳门', value: 600 },
+    { name: '北京市', value: 7 },
+    { name: '上海市', value: 6 },
+    { name: '广东省', value: 9 },
+    { name: '浙江省', value: 3 },
   ]
 }
 
-/** 生成完整大屏聚合数据 */
 export function createDashboardMockData(): DashboardData {
   return {
     summary: buildSummary(),
+    roomStats: buildRoomStats(),
     trend: buildTrend(),
-    category: buildCategory(),
-    cityRank: buildCityRank(),
+    hostRank: buildHostRank(),
     radar: buildRadar(),
-    activity: buildActivity(),
+    alerts: buildAlerts(),
     map: buildMap(),
   }
 }

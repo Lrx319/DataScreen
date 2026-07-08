@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// 顶部标题栏：项目标题 + 实时系统时间
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { formatDateTime } from '@/utils/format'
 
@@ -24,12 +23,12 @@ onBeforeUnmount(() => {
       <span class="screen-header__date">{{ now.split(' ')[0] }}</span>
     </div>
     <h1 class="screen-header__title">
-      <span class="screen-header__cn">明格大屏</span>
-      <span class="screen-header__en">BrightScreen</span>
+      <span class="screen-header__cn">数据中心运行监控大屏</span>
+      <span class="screen-header__en">DataScreen</span>
     </h1>
     <div class="screen-header__side screen-header__side--right">
       <span class="screen-header__time">{{ now.split(' ')[1] }}</span>
-      <span class="screen-header__tag">DATA VISUAL</span>
+      <span class="screen-header__tag">DATA CENTER</span>
     </div>
   </header>
 </template>

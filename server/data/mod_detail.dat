@@ -1,0 +1,7 @@
+cpu	CPU使用率	CPU占用百分比	%
+mem	内存使用率	内存占用百分比	%
+disk_util	磁盘使用率	磁盘空间占用百分比	%
+disk_io_wait	磁盘IO等待	磁盘IO等待时间	ms
+net_in	网络入流量	网络入站流量	KB/s
+net_out	网络出流量	网络出站流量	KB/s
+load_avg	系统负载	系统平均负载	

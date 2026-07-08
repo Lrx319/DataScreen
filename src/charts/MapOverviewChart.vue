@@ -33,10 +33,10 @@ async function ensureMap() {
 function buildOption(): echarts.EChartsOption | null {
   if (!mapReady) return null
   return {
-    tooltip: { trigger: 'item', formatter: '{b}<br/>访问量: {c}' },
+    tooltip: { trigger: 'item', formatter: '{b}<br/>主机数: {c}' },
     visualMap: {
       min: 0,
-      max: 10000,
+      max: 20,
       left: 20,
       bottom: 24,
       text: ['高', '低'],

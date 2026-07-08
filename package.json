@@ -1,8 +1,8 @@
 {
-  "name": "brightscreen",
+  "name": "datascreen",
   "version": "1.0.0",
   "private": true,
-  "description": "明格大屏 BrightScreen - 教学型数据可视化大屏项目",
+  "description": "DataScreen 数据中心运行监控大屏",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,7 +15,11 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "screenshot": "node scripts/screenshot.mjs",
-    "msw:init": "msw init public/ --save"
+    "msw:init": "msw init public/ --save",
+    "server:dev": "cd server && npm run dev",
+    "server:build": "cd server && npm run build",
+    "server:etl": "cd server && npm run etl",
+    "start": "npm run dev"
   },
   "dependencies": {
     "axios": "^1.7.9",

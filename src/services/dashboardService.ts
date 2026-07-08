@@ -1,24 +1,53 @@
-// 业务服务层：所有组件只允许通过此层获取数据
 import http from './http'
-import type { ActivityItem, DashboardData } from '@/types/dashboard'
+import type { AlertItem, DashboardData, HostRank, MapPoint, RadarAbility, RoomStats, SummaryMetrics } from '@/types/dashboard'
 
-/**
- * 获取大屏聚合数据（核心汇总、趋势、占比、排名、雷达、活动、地图）
- */
 export async function fetchDashboardData(): Promise<DashboardData> {
   const res = await http.get<DashboardData>('/dashboard')
   return res.data
 }
 
-/**
- * 获取实时动态列表
- */
-export async function fetchActivityList(): Promise<ActivityItem[]> {
-  const res = await http.get<ActivityItem[]>('/dashboard/activity')
+export async function fetchSummary(): Promise<SummaryMetrics> {
+  const res = await http.get<SummaryMetrics>('/dashboard/summary')
+  return res.data
+}
+
+export async function fetchRoomStats(): Promise<RoomStats[]> {
+  const res = await http.get<RoomStats[]>('/dashboard/room-stats')
+  return res.data
+}
+
+export async function fetchTrend() {
+  const res = await http.get('/dashboard/trend')
+  return res.data
+}
+
+export async function fetchHostRank(): Promise<HostRank[]> {
+  const res = await http.get<HostRank[]>('/dashboard/host-rank')
+  return res.data
+}
+
+export async function fetchRadar(): Promise<RadarAbility[]> {
+  const res = await http.get<RadarAbility[]>('/dashboard/radar')
+  return res.data
+}
+
+export async function fetchAlerts(): Promise<AlertItem[]> {
+  const res = await http.get<AlertItem[]>('/dashboard/alerts')
+  return res.data
+}
+
+export async function fetchMap(): Promise<MapPoint[]> {
+  const res = await http.get<MapPoint[]>('/dashboard/map')
   return res.data
 }
 
 export const dashboardService = {
   fetchDashboardData,
-  fetchActivityList,
+  fetchSummary,
+  fetchRoomStats,
+  fetchTrend,
+  fetchHostRank,
+  fetchRadar,
+  fetchAlerts,
+  fetchMap,
 }

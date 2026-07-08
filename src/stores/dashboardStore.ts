@@ -1,4 +1,3 @@
-// 大屏数据状态管理
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { dashboardService } from '@/services/dashboardService'
@@ -10,7 +9,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  /** 加载完整大屏数据 */
   async function loadDashboard() {
     loading.value = true
     error.value = null
@@ -25,15 +23,14 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
-  /** 单独刷新实时动态 */
-  async function refreshActivity() {
+  async function refreshAlerts() {
     try {
-      const activity = await dashboardService.fetchActivityList()
-      if (data.value) data.value.activity = activity
+      const alerts = await dashboardService.fetchAlerts()
+      if (data.value) data.value.alerts = alerts
     } catch (e) {
-      logger.error('[store] refresh activity failed', e)
+      logger.error('[store] refresh alerts failed', e)
     }
   }
 
-  return { data, loading, error, loadDashboard, refreshActivity }
+  return { data, loading, error, loadDashboard, refreshAlerts }
 })
