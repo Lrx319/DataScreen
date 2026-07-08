@@ -10,7 +10,7 @@ DataScreen 是一个完整的数据中心运行监控大屏，包含后端 MySQL
 
 ![DataScreen 预览图](./docs/assets/dashboard-preview.png)
 
-> 上图展示 1920×1080 自适应大屏：顶部标题栏、4 组核心指标卡（服务器总数、CPU/内存/磁盘IO）、7天趋势折线、机房分布饼图、全国地图态势、主机排名柱状、四维能力雷达与底部告警滚动列表。
+> 上图展示 1920×1080 自适应大屏：顶部标题栏、4 组核心指标卡（服务器总数、CPU/内存/磁盘IO）、7天趋势折线、机房分布饼图、服务器健康热力图、主机排名柱状、四维能力雷达与底部告警滚动列表。
 
 ---
 
@@ -18,7 +18,7 @@ DataScreen 是一个完整的数据中心运行监控大屏，包含后端 MySQL
 
 - **全栈架构**：前端 Vue3 + ECharts + Pinia，后端 Node + Express + MySQL8.0
 - **ETL 数据处理**：支持 Tab 分隔 dat 文件导入，包含时间戳转换、脏数据过滤、批量入库
-- **分层数据源切换**：通过环境变量 `VITE_DATA_SOURCE` 在 `mock` / `db` 间切换，业务组件零改动
+- **分层数据源切换**：通过环境变量 `VITE_DATA_SOURCE` 在 `mock` / `api` 间切换，业务组件零改动
 - **6 类业务接口**：机房统计、7天性能趋势、主机负载排名、磁盘 IO 延迟、四维性能雷达、指标超标告警
 - **可扩展日志系统**：`src/logs/logger.ts` 提供 `info / warn / error / debug`，预留 Sentry 等线上监控接入点
 - **完整质量管控**：ESLint + Prettier + Stylelint + TypeScript Strict 模式
@@ -136,36 +136,39 @@ npm run server:build
 
 | 文件 | 内容 | 采样频率 |
 | --- | --- | --- |
-| `host_detail.dat` | 主机资产信息（主机ID、名称、IP、机房、机柜） | 静态数据 |
-| `mod_detail.dat` | 指标字典（7个监控指标的ID、名称、描述、单位） | 静态数据 |
-| `disk_tsar.dat` | 磁盘监控时序数据（磁盘使用率、IO等待时间） | 5分钟采样 |
+| `host_detail.dat` | 主机资产信息（主机ID、名称、负责人、型号、机房、机柜） | 静态数据 |
+| `mod_detail.dat` | 指标字典（55个监控指标的ID、类型、描述、单位、标签） | 静态数据 |
+| `disk_tsar.dat` | 磁盘监控时序数据（磁盘使用率、IO等待时间、服务时间） | 5分钟采样 |
 | `pref_tsar.dat` | 性能监控时序数据（CPU、内存、网络入/出流量） | 每小时采样 |
 
 ### 数据结构
 
 **host_detail.dat（Tab分隔）**：
 ```
-host-001	srv-beijing-01	192.168.1.1	A	Rack-A01
+hostid  hostname        owner   model   location1       location2
+host001 server-001.hismartlab.cn        陈三    Dell R750       A机房   机柜12
 ```
 
 **mod_detail.dat（Tab分隔）**：
 ```
-cpu	CPU使用率	CPU占用百分比	%
+mod     type    desc    unit    tag
+cpu_usage       percent CPU使用率       %       cpu_percent
 ```
 
 **disk_tsar.dat / pref_tsar.dat（Tab分隔）**：
 ```
-host-001	cpu	00:00	45.2
+hostid  ts      mod     tag     value
+host001 1723305600000   cpu_usage       cpu_percent     45.2
 ```
 
 ### 双数据源切换
 
 通过环境变量 `VITE_DATA_SOURCE` 控制数据来源：
 
-| 模式         | 取值                    | 行为                                                    |
-| ------------ | ----------------------- | ------------------------------------------------------- |
-| Mock（默认） | `VITE_DATA_SOURCE=mock` | 启动 MSW 拦截请求，返回基于 dat 文件生成的模拟数据       |
-| 真实后端     | `VITE_DATA_SOURCE=db`   | 关闭 MSW，Axios 直连 `VITE_API_BASE_URL` 指定的真实接口 |
+| 模式         | 取值                     | 行为                                                    |
+| ------------ | ------------------------ | ------------------------------------------------------- |
+| Mock（默认） | `VITE_DATA_SOURCE=mock`  | 启动 MSW 拦截请求，返回基于 dat 文件生成的模拟数据       |
+| 真实后端     | `VITE_DATA_SOURCE=api`   | 关闭 MSW，Axios 直连 `VITE_API_BASE_URL` 指定的真实接口 |
 
 ---
 
@@ -175,30 +178,32 @@ host-001	cpu	00:00	45.2
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| host_id | VARCHAR(64) | 主键，主机ID |
-| host_name | VARCHAR(128) | 主机名称 |
-| ip_addr | VARCHAR(45) | IP地址 |
-| room | VARCHAR(32) | 机房标识（A/B/C/D/E） |
-| rack | VARCHAR(32) | 机柜位置 |
-| status | TINYINT | 状态 |
+| hostid | VARCHAR(64) | 主键，主机ID |
+| hostname | VARCHAR(128) | 主机名称 |
+| owner | VARCHAR(64) | 负责人 |
+| model | VARCHAR(64) | 型号 |
+| location1 | VARCHAR(32) | 机房标识（A机房/B机房/C机房/D机房/E机房） |
+| location2 | VARCHAR(32) | 机柜位置 |
 
 ### mod_detail（指标字典表）
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| mod_id | VARCHAR(32) | 主键，指标ID |
-| mod_name | VARCHAR(128) | 指标名称 |
-| mod_desc | VARCHAR(256) | 指标描述 |
+| mod | VARCHAR(64) | 主键，指标ID |
+| type | VARCHAR(16) | 类型 |
+| desc | VARCHAR(128) | 指标描述 |
 | unit | VARCHAR(16) | 单位 |
+| tag | VARCHAR(64) | 标签 |
 
 ### tsar_detail（时序采集明细表）
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | id | BIGINT | 主键，自增 |
-| host_id | VARCHAR(64) | 外键，关联主机 |
-| mod_id | VARCHAR(32) | 外键，关联指标 |
-| collect_time | DATETIME | 采集时间 |
+| hostid | VARCHAR(64) | 外键，关联主机 |
+| ts | BIGINT | 时间戳（毫秒） |
+| mod | VARCHAR(64) | 外键，关联指标 |
+| tag | VARCHAR(64) | 标签 |
 | value | DOUBLE | 指标值 |
 
 ---
